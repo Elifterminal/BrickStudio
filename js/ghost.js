@@ -4,7 +4,7 @@ import { STUD, PLATE } from './constants.js';
 import { scene, camera } from './scene.js';
 import { makeGroup, disposeGroup, bodyColor } from './factory.js';
 import { computeTarget } from './snapping.js';
-import { heightPlatesOf } from './kinds.js';
+import { heightPlatesOf } from './registry.js';
 import { selType, selSize, selColor, rot, effFoot } from './selection.js';
 import { footCells, isValid } from './occupancy.js';
 

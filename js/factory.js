@@ -1,7 +1,7 @@
 // Builds a Three.js group for any registered kind. Used for both real pieces and ghosts.
 import * as THREE from 'three';
 import { STUD, PLATE, STUD_H, STUD_R } from './constants.js';
-import { getKind, footprint, heightPlatesOf } from './kinds.js';
+import { getKind, footprint, heightPlatesOf } from './registry.js';
 import { current as theme, registerEdgeMat } from './themes.js';
 
 // The color a piece should use: picked color for colorable kinds, else the kind's fixed color.

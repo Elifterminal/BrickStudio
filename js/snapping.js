@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { STUD, PLATE } from './constants.js';
 import { camera, raycaster, pointer } from './scene.js';
 import { placedMeshes } from './blocks.js';
-import { heightPlatesOf } from './kinds.js';
+import { heightPlatesOf } from './registry.js';
 import { selType, selSize, effFoot, stickyLevel, setSticky } from './selection.js';
 import { footCells, isValid } from './occupancy.js';
 

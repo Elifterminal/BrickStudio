@@ -2,7 +2,7 @@
 import { PLATE } from './constants.js';
 import { scene, camera, raycaster, pointer } from './scene.js';
 import { makeGroup, disposeGroup, bodyColor } from './factory.js';
-import { getKind, heightPlatesOf } from './kinds.js';
+import { getKind, heightPlatesOf } from './registry.js';
 import { selType, selSize, selColor, rot } from './selection.js';
 import { STUD } from './constants.js';
 import { addVoxels, removeVoxels, isValid } from './occupancy.js';

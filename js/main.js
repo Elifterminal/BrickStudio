@@ -1,5 +1,5 @@
 // Entry point: wire the modules together and run the render loop.
-import './kinds.js';                       // side-effect: registers the default parts
+import './parts/index.js';                       // side-effect: registers the default parts
 import { initScene, applyTheme, scene, camera, renderer, controls } from './scene.js';
 import { initGhost } from './ghost.js';
 import { buildUI, updateModePill } from './ui.js';

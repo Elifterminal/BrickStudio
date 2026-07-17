@@ -1,5 +1,5 @@
-// Builds the sidebar from the part registry + wires color/theme/clear controls.
-import { allKinds } from './kinds.js';
+// Builds the sidebar: theme, colors, category tabs, and the palette for the active tab.
+import { allKinds, categories, kindsInCategory } from './registry.js';
 import { COLORS } from './colors.js';
 import { THEMES } from './themes.js';
 import { setPiece, setColor, setRot, setSticky, selType, selSize, selColor } from './selection.js';
@@ -8,11 +8,13 @@ import { setHovered, clearAll } from './blocks.js';
 import { applyTheme } from './scene.js';
 
 const modePill = () => document.getElementById('mode-pill');
+let activeCat = null;
 
 export function buildUI() {
     buildThemeSelect();
     buildColorRow();
-    buildPalette();
+    buildTabs();
+    renderCategory(categories()[0]);
     document.getElementById('clear-all').addEventListener('click', clearAll);
 }
 
@@ -43,9 +45,25 @@ function buildColorRow() {
     });
 }
 
-function buildPalette() {
+function buildTabs() {
+    const bar = document.getElementById('tabs');
+    categories().forEach(cat => {
+        const t = document.createElement('button');
+        t.className = 'tab';
+        t.textContent = cat;
+        t.dataset.cat = cat;
+        t.addEventListener('click', () => renderCategory(cat));
+        bar.appendChild(t);
+    });
+}
+
+function renderCategory(cat) {
+    activeCat = cat;
+    document.querySelectorAll('#tabs .tab').forEach(t => t.classList.toggle('active', t.dataset.cat === cat));
+
     const pal = document.getElementById('palette');
-    allKinds().forEach(kind => {
+    pal.innerHTML = '';
+    kindsInCategory(cat).forEach(kind => {
         const h = document.createElement('h2');
         h.className = 'section';
         h.textContent = kind.label.toUpperCase();
@@ -55,7 +73,7 @@ function buildPalette() {
         grid.className = 'grid grid-cols-3 gap-1';
         kind.sizes.forEach(size => {
             const b = document.createElement('button');
-            b.className = 'block-button';
+            b.className = 'block-button' + (selType === kind.id && selSize === size ? ' active' : '');
             b.textContent = sizeLabel(size);
             b.dataset.type = kind.id;
             b.dataset.size = size;

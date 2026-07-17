@@ -1,6 +1,6 @@
 // Current build selection: which piece, color, rotation, and the "sticky" build level.
 // Exported bindings are read live by other modules; only mutate them through the setters here.
-import { footprint } from './kinds.js';
+import { footprint } from './registry.js';
 import { DEFAULT_COLOR } from './colors.js';
 
 export let selType = null;

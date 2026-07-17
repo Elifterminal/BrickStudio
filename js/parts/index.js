@@ -1,0 +1,7 @@
+// Registers all parts, in the order their categories should appear as tabs.
+import './basic.js';
+import './round.js';
+import './slopes.js';
+import './arches.js';
+import './pillars.js';
+import './special.js';
