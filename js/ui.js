@@ -6,7 +6,8 @@ import { setPiece, setColor, setRot, setSticky, selType, selSize, selColor } fro
 import { rebuildGhost } from './ghost.js';
 import { setHovered, clearAll } from './blocks.js';
 import { applyTheme } from './scene.js';
-import { saveBuild, exportBuild, importBuild } from './persistence.js';
+import { saveBuild, exportBuild, importBuild, listSlots, saveSlot, loadSlot, deleteSlot } from './persistence.js';
+import { toggleAnimating } from './motion.js';
 
 const modePill = () => document.getElementById('mode-pill');
 let activeCat = null;
@@ -16,7 +17,45 @@ export function buildUI() {
     buildColorRow();
     buildTabs();
     renderCategory(categories()[0]);
+    buildBuildsPanel();
+    buildAnimateToggle();
     buildFileControls();
+}
+
+function buildAnimateToggle() {
+    const btn = document.getElementById('animate-toggle');
+    btn.addEventListener('click', () => {
+        const on = toggleAnimating();
+        btn.textContent = on ? 'Animation: On' : 'Animation: Off';
+        btn.classList.toggle('active', on);
+    });
+}
+
+function buildBuildsPanel() {
+    const sel = document.getElementById('slot-select');
+    refreshSlots();
+
+    document.getElementById('save-slot').addEventListener('click', () => {
+        const name = (prompt('Name this build:') || '').trim();
+        if (!name) return;
+        saveSlot(name);
+        refreshSlots();
+        sel.value = name;
+    });
+    document.getElementById('load-slot').addEventListener('click', () => {
+        if (sel.value) loadSlot(sel.value);
+    });
+    document.getElementById('delete-slot').addEventListener('click', () => {
+        if (sel.value && confirm(`Delete build "${sel.value}"?`)) { deleteSlot(sel.value); refreshSlots(); }
+    });
+}
+
+function refreshSlots() {
+    const sel = document.getElementById('slot-select');
+    const names = listSlots();
+    sel.innerHTML = names.length
+        ? names.map(n => `<option value="${n}">${n}</option>`).join('')
+        : '<option value="">(no saved builds)</option>';
 }
 
 function buildFileControls() {

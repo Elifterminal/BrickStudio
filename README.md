@@ -72,15 +72,24 @@ registerKind({
 It shows up in the palette automatically. For a custom shape, pass your own
 `geometry(fw, fd, h)` builder.
 
+## Movable parts
+
+Wheels, propellers, and fans **spin** on their own (a real animation). The **Animation**
+toggle in the sidebar pauses them so you can build precisely. Note: they're not yet
+mechanically driven by axles — that needs a physics/constraint layer. Axles and pins are
+structural connector pieces for now.
+
 ## Saving
 
-Builds **auto-save to `localStorage`** on every place/delete, so they survive a refresh.
-Use **Export** to download a build as JSON and **Import** to load one back (also handy for
-sharing or backup). Clearing the board is persisted too.
+- Builds **auto-save to `localStorage`** on every place/delete, so they survive a refresh.
+- **Named builds:** in the BUILDS panel, *Save As* stores the current build under a name,
+  *Load* restores it, *Delete* removes it. Multiple builds are kept.
+- **Export / Import** a build as a JSON file for backup or sharing.
 
 ## Roadmap
 
 - Particle water (tiny mass-bearing droplets) for the Water piece
 - Multi-size / multi-brightness light bricks
-- More parts (windows, doors, curved slopes, wedge plates) as real LEGO elements
-- Named save slots + shareable links
+- Axle-driven mechanics (gears/constraints) so wheels are actually powered
+- More parts (doors, curved slopes, wedge plates) as real LEGO elements
+- Shareable build links

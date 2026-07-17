@@ -21,20 +21,26 @@ export function makeGroup(kindId, size, colorHex, opts = {}) {
     const emissiveBase = k.emissive || 0x000000;
     const ghostMats = { bodies: [] };
 
+    // Spinning parts put their visual into a rotor child the animation loop can turn.
+    let rotor = null, visual = g;
+    if (k.spin && !ghostMode) { rotor = new THREE.Group(); g.add(rotor); visual = rotor; }
+
+    const twoSided = ['slope','islope','cslope','shaft-fluted'].includes(kindId)
+        || kindId.startsWith('arch') || kindId.startsWith('window') || !!k.spin;
     const bodyMat = new THREE.MeshStandardMaterial({
         color: colorHex, emissive: emissiveBase,
         roughness: 0.5, metalness: 0.12,
         transparent: ghostMode, opacity: ghostMode ? 0.55 : 1,
-        side: kindId === 'slope' ? THREE.DoubleSide : THREE.FrontSide,
+        side: twoSided ? THREE.DoubleSide : THREE.FrontSide,
     });
     ghostMats.bodies.push(bodyMat);
     const body = new THREE.Mesh(geo, bodyMat);
     body.castShadow = !ghostMode; body.receiveShadow = !ghostMode;
     body.userData.root = g;
-    g.add(body);
+    visual.add(body);
 
     const edgeMat = new THREE.LineBasicMaterial({ color: theme.edge, transparent: true, opacity: ghostMode ? 0.9 : theme.edgeOp });
-    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), edgeMat));
+    visual.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), edgeMat));
     if (ghostMode) ghostMats.edge = edgeMat; else registerEdgeMat(edgeMat);
 
     if (k.studs) {
@@ -65,10 +71,20 @@ export function makeGroup(kindId, size, colorHex, opts = {}) {
             new THREE.MeshStandardMaterial({ color: 0x0066ff, emissive: 0x00224a, transparent: true, opacity: 0.7, roughness: 0.2, metalness: 0.7 })
         );
         g.userData.waterInner = inner;
+        inner.userData.root = g;
         g.add(inner);
+    }
+    if (k.pane && !ghostMode) {
+        const pane = new THREE.Mesh(
+            new THREE.BoxGeometry(fw * STUD * 0.86, h * 0.86, fd * STUD * 0.34),
+            new THREE.MeshStandardMaterial({ color: 0x9fd8ff, emissive: 0x0a2233, transparent: true, opacity: 0.4, roughness: 0.1, metalness: 0.3, side: THREE.DoubleSide })
+        );
+        pane.userData.root = g;
+        g.add(pane);
     }
 
     g.userData = Object.assign(g.userData || {}, { type: kindId, size, fw, fd, hP, h });
+    if (rotor) { g.userData.spin = k.spin; g.userData.rotor = rotor; }
     if (ghostMode) g.userData.ghostMats = ghostMats;
     return g;
 }

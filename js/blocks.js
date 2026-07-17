@@ -37,7 +37,8 @@ export function addBlock(spec, opts = {}) {
     scene.add(g);
 
     const voxels = addVoxels(cells, level, hP);
-    const meshes = g.children.filter(c => c.isMesh);
+    const meshes = [];
+    g.traverse(o => { if (o.isMesh) meshes.push(o); });   // includes rotor children
     const rec = { id: nextId++, group: g, voxels, meshes, level, hP, spec: { type, size, color, rot: r, minGX, minGZ, level } };
     g.userData.record = rec;
     placedBlocks.push(rec);

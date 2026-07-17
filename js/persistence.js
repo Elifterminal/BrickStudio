@@ -2,10 +2,37 @@
 // plus Export/Import of a JSON file for backup and sharing.
 import { placedBlocks, addBlock, clearAll } from './blocks.js';
 
-const KEY = 'eliflego.build.v1';
+const KEY = 'eliflego.build.v1';        // the auto-saved current build
+const SLOTS_KEY = 'eliflego.slots.v1';  // named saves { name: {v, blocks} }
 
 export function serialize() {
     return { v: 1, blocks: placedBlocks.map(b => b.spec) };
+}
+
+// ---- Named build slots ----
+function readSlots() { try { return JSON.parse(localStorage.getItem(SLOTS_KEY) || '{}'); } catch { return {}; } }
+function writeSlots(o) { try { localStorage.setItem(SLOTS_KEY, JSON.stringify(o)); } catch (e) { console.warn('ElifLego: slots write failed', e); } }
+
+export function listSlots() { return Object.keys(readSlots()).sort(); }
+
+export function saveSlot(name) {
+    const o = readSlots();
+    o[name] = serialize();
+    writeSlots(o);
+}
+
+export function loadSlot(name) {
+    const o = readSlots();
+    if (!o[name]) return 0;
+    const n = restore(o[name].blocks || []);
+    saveBuild();                        // make the loaded build the current one
+    return n;
+}
+
+export function deleteSlot(name) {
+    const o = readSlots();
+    delete o[name];
+    writeSlots(o);
 }
 
 export function saveBuild() {

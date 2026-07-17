@@ -123,6 +123,99 @@ export function capitalGeometry(fw, fd, h, order = 'doric') {
     return lathe(profiles[order] || profiles.doric);
 }
 
+// ---- Windows: a thin frame (extruded across depth) with a shaped opening ----
+// style: 'plain', 'cross' (4 panes), 'arched' (round top), 'round' (porthole).
+export function windowGeometry(fw, fd, h, style = 'plain') {
+    const L = fw * STUD, H = h, D = fd * STUD, fr = STUD * 0.32;
+    const shape = new THREE.Shape();
+    shape.moveTo(-L/2, -H/2); shape.lineTo(L/2, -H/2); shape.lineTo(L/2, H/2); shape.lineTo(-L/2, H/2); shape.closePath();
+
+    const ix = L/2 - fr, iy = H/2 - fr;
+    if (style === 'round') {
+        const r = Math.min(ix, iy);
+        const p = new THREE.Path(); p.absarc(0, 0, r, 0, Math.PI * 2, true); shape.holes.push(p);
+    } else if (style === 'arched') {
+        const p = new THREE.Path();
+        p.moveTo(ix, -iy); p.lineTo(-ix, -iy); p.lineTo(-ix, 0);
+        p.absellipse(0, 0, ix, iy, Math.PI, 0, true); p.closePath();
+        shape.holes.push(p);
+    } else if (style === 'cross') {
+        const m = fr * 0.6;
+        shape.holes.push(rectPath(-ix, -iy, -m, -m), rectPath(m, -iy, ix, -m),
+                         rectPath(-ix, m, -m, iy), rectPath(m, m, ix, iy));
+    } else {
+        shape.holes.push(rectPath(-ix, -iy, ix, iy));
+    }
+    const g = new THREE.ExtrudeGeometry(shape, { depth: D, bevelEnabled: false });
+    g.translate(0, 0, -D / 2);
+    return g;
+}
+
+// ---- Movable parts (spun by the animation loop) ----
+export function wheelGeometry(fw, fd, h) {          // spins about X (rolls)
+    const R = Math.min(fw, fd) * STUD * 0.6, W = Math.min(fw, fd) * STUD * 0.55;
+    const g = new THREE.CylinderGeometry(R, R, W, 24);
+    g.rotateZ(Math.PI / 2);
+    return g;
+}
+
+export function propellerGeometry(fw, fd, h) {       // spins about Z (faces forward)
+    const R = Math.max(fw, fd) * STUD * 0.42, N = 4, geoms = [];
+    const hub = new THREE.CylinderGeometry(STUD * 0.26, STUD * 0.26, STUD * 0.7, 14);
+    hub.rotateX(Math.PI / 2); geoms.push(hub);
+    for (let i = 0; i < N; i++) {
+        const b = new THREE.BoxGeometry(R * 1.4, STUD * 0.36, STUD * 0.16);
+        b.translate(R * 0.7, 0, 0); b.rotateZ(i * 2 * Math.PI / N); geoms.push(b);
+    }
+    return mergeGeoms(geoms);
+}
+
+export function fanGeometry(fw, fd, h) {              // spins about Y (ceiling fan)
+    const R = Math.max(fw, fd) * STUD * 0.42, N = 4, geoms = [];
+    const hub = new THREE.CylinderGeometry(STUD * 0.26, STUD * 0.26, STUD * 0.6, 14);
+    geoms.push(hub);
+    for (let i = 0; i < N; i++) {
+        const b = new THREE.BoxGeometry(R * 1.4, STUD * 0.16, STUD * 0.4);
+        b.translate(R * 0.7, 0, 0); b.rotateY(i * 2 * Math.PI / N); geoms.push(b);
+    }
+    return mergeGeoms(geoms);
+}
+
+// ---- Technic connectors ----
+export function axleGeometry(fw, fd, h) {             // + cross-section rod along X
+    const L = Math.max(fw, fd) * STUD, t = STUD * 0.16;
+    return mergeGeoms([
+        new THREE.BoxGeometry(L, t * 2.6, t),
+        new THREE.BoxGeometry(L, t, t * 2.6),
+    ]);
+}
+
+export function pinGeometry(fw, fd, h) {              // short connector pin along X
+    const r = STUD * 0.2;
+    const g = new THREE.CylinderGeometry(r, r, Math.max(fw, fd) * STUD * 0.9, 12);
+    g.rotateZ(Math.PI / 2);
+    return g;
+}
+
+function rectPath(x0, y0, x1, y1) {                   // clockwise (hole winding)
+    const p = new THREE.Path();
+    p.moveTo(x0, y0); p.lineTo(x0, y1); p.lineTo(x1, y1); p.lineTo(x1, y0); p.closePath();
+    return p;
+}
+
+// Merge geometries into one (bake their transforms). Avoids an external util dependency.
+function mergeGeoms(geoms) {
+    const arrays = geoms.map(g => (g.index ? g.toNonIndexed() : g).getAttribute('position').array);
+    const total = arrays.reduce((s, a) => s + a.length, 0);
+    const pos = new Float32Array(total);
+    let o = 0;
+    for (const a of arrays) { pos.set(a, o); o += a.length; }
+    const merged = new THREE.BufferGeometry();
+    merged.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    merged.computeVertexNormals();
+    return merged;
+}
+
 function fromTris(verts) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(verts.flat(), 3));

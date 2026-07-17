@@ -6,6 +6,7 @@ import { buildUI, updateModePill } from './ui.js';
 import { setupEvents } from './input.js';
 import { placedBlocks } from './blocks.js';
 import { loadBuild } from './persistence.js';
+import { animating } from './motion.js';
 
 const canvas = document.getElementById('lego-canvas');
 const container = document.getElementById('canvas-container');
@@ -18,13 +19,18 @@ setupEvents();
 updateModePill();
 loadBuild();            // restore the previous build, if any
 
-let t = 0;
+let t = 0, last = performance.now();
 function animate() {
     requestAnimationFrame(animate);
-    t += 0.016;
+    const now = performance.now();
+    const dt = Math.min((now - last) / 1000, 0.1);   // clamp big gaps (tab was hidden)
+    last = now;
+    t += dt;
+
     for (const b of placedBlocks) {
-        const w = b.group.userData.waterInner;
-        if (w) { w.rotation.y += 0.02; w.scale.setScalar(0.9 + Math.sin(t * 2) * 0.06); }
+        const ud = b.group.userData;
+        if (animating && ud.spin) ud.rotor.rotation[ud.spin.axis] += ud.spin.speed * dt;
+        if (ud.waterInner) { ud.waterInner.rotation.y += 0.02; ud.waterInner.scale.setScalar(0.9 + Math.sin(t * 2) * 0.06); }
     }
     controls.update();
     renderer.render(scene, camera);
