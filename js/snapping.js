@@ -5,8 +5,8 @@ import * as THREE from 'three';
 import { STUD, PLATE } from './constants.js';
 import { camera, raycaster, pointer } from './scene.js';
 import { placedMeshes, axles } from './blocks.js';
-import { heightPlatesOf, getKind } from './registry.js';
-import { selType, selSize, effFoot, stickyLevel, setSticky } from './selection.js';
+import { heightPlatesOf, getKind, footprint } from './registry.js';
+import { selType, selSize, effFoot, stickyLevel, setSticky, axleMountMode } from './selection.js';
 import { footCells, isValid } from './occupancy.js';
 
 const UP = new THREE.Vector3(0, 1, 0);
@@ -38,6 +38,26 @@ function nearestAxleMount() {
     return best;
 }
 
+// Snap an axle to the vertical side face under the cursor, sticking out perpendicular.
+// 'end' mode puts the axle's near end on the face; 'mid' centers it on the face.
+function sideMountForAxle() {
+    const hits = raycaster.intersectObjects(placedMeshes, false);
+    if (!hits.length || !hits[0].face) return null;
+    const hit = hits[0];
+    const n = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
+    if (Math.abs(n.y) > 0.5) return null;                    // top/bottom face — use grid instead
+    const axleChar = Math.abs(n.x) >= Math.abs(n.z) ? 'x' : 'z';
+    const halfLen = Math.max(...footprint(selSize)) * STUD / 2;
+    const off = axleMountMode === 'mid' ? 0 : halfLen;
+    const y = Math.round(hit.point.y / PLATE) * PLATE;
+    if (axleChar === 'x') {
+        const dir = Math.sign(n.x) || 1;
+        return { x: hit.point.x + dir * off, y, z: Math.round(hit.point.z / STUD) * STUD, axleChar };
+    }
+    const dir = Math.sign(n.z) || 1;
+    return { x: Math.round(hit.point.x / STUD) * STUD, y, z: hit.point.z + dir * off, axleChar };
+}
+
 export function computeTarget() {
     if (!selType) return null;
     raycaster.setFromCamera(pointer, camera);
@@ -46,6 +66,11 @@ export function computeTarget() {
     if (getKind(selType).mount === 'axle') {
         const m = nearestAxleMount();
         if (m) return { mount: m, valid: true };
+    }
+    // Axles can snap to a block's side face (else fall through to grid / on-top placement).
+    if (getKind(selType).sideMount) {
+        const sm = sideMountForAxle();
+        if (sm) return { mount: sm, valid: true };
     }
 
     const [ew, ed] = effFoot();

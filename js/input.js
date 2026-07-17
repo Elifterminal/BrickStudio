@@ -1,10 +1,10 @@
 // Pointer + keyboard handling. Click = place/erase; left-drag = orbit (OrbitControls).
 import { renderer, pointer, dolly } from './scene.js';
-import { selType, setRot, rot } from './selection.js';
+import { selType, setRot, rot, toggleAxleMount } from './selection.js';
 import { updateGhost, hideGhost, applyRotation, nudge, ghostState } from './ghost.js';
 import { placeAt, deleteRoot, rootUnder, setHovered } from './blocks.js';
 import { saveBuild } from './persistence.js';
-import { deselect } from './ui.js';
+import { deselect, updateModePill } from './ui.js';
 
 let downPos = null, moved = false;
 
@@ -36,6 +36,7 @@ export function setupEvents() {
     window.addEventListener('keydown', e => {
         const k = e.key;
         if (k === 'r' || k === 'R') { setRot(rot + 1); applyRotation(); }
+        else if (k === 'm' || k === 'M') { toggleAxleMount(); updateGhost(); updateModePill(); }
         else if (k === 'Escape') deselect();
         else if (k.startsWith('Arrow')) { e.preventDefault(); nudge(k.slice(5).toLowerCase()); }
     });

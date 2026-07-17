@@ -79,8 +79,14 @@ toggle in the sidebar pauses them so you can build precisely.
 
 **Mounting on axles:** place an axle (Technic tab), then select a wheel/propeller/fan and move
 the cursor near the axle — it snaps onto the nearest **mid or end** point and aligns its spin
-axis to the axle. Away from an axle they place freely on the grid. Note: the spin is still
-per-part, not gear-driven — the axle sets position/orientation, not power.
+axis to the axle. Away from an axle they place freely on the grid.
+
+**Axles on block sides:** an axle can lie on top of a block (grid) *or* snap to a block's
+vertical **side face**, sticking out perpendicular — hover a side and it attaches. Press **M**
+to toggle whether the axle's **end** or **middle** sits on the face. Great for a windmill arm
+poking out of a tower.
+
+Note: spin is still per-part, not gear-driven — axles/mounts set position and orientation, not power.
 
 ## Saving
 

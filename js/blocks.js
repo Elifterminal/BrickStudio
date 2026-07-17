@@ -19,9 +19,11 @@ function effFoot(size, rotation) {
     return (rotation % 2) ? [d, w] : [w, d];
 }
 
-// Which 90° turn aligns a spinner's local axis to the axle direction.
+// Which 90° turn aligns a part's local long/spin axis to the axle direction.
+// Movable parts spin about spin.axis; an axle's own geometry lies along local X.
 export function mountRotation(kindId, axleChar) {
-    return getKind(kindId).spin.axis === axleChar ? 0 : 1;
+    const localAxis = getKind(kindId).spin?.axis || 'x';
+    return localAxis === axleChar ? 0 : 1;
 }
 
 function registerBlock(g, voxels, spec) {
@@ -37,9 +39,10 @@ function registerBlock(g, voxels, spec) {
 
 function recordAxle(rec, spec) {
     const long = Math.max(...footprint(spec.size));
+    const axleChar = spec.mount ? spec.mount.axleChar : ((spec.rot % 2) ? 'z' : 'x');
     axles.push({
         id: rec.id, cx: rec.group.position.x, cy: rec.group.position.y, cz: rec.group.position.z,
-        axleChar: (spec.rot % 2) ? 'z' : 'x', halfLen: long * STUD / 2,
+        axleChar, halfLen: long * STUD / 2,
     });
 }
 
