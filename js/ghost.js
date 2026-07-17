@@ -4,6 +4,7 @@ import { STUD, PLATE } from './constants.js';
 import { scene, camera } from './scene.js';
 import { makeGroup, disposeGroup, bodyColor } from './factory.js';
 import { computeTarget } from './snapping.js';
+import { mountRotation } from './blocks.js';
 import { heightPlatesOf } from './registry.js';
 import { selType, selSize, selColor, rot, effFoot } from './selection.js';
 import { footCells, isValid } from './occupancy.js';
@@ -43,17 +44,28 @@ export function updateGhost() {
 }
 
 function positionGhost(st) {
-    const h = heightPlatesOf(selType, selSize) * PLATE;
-    const cx = (st.minGX + (st.ew - 1) / 2) * STUD;
-    const cz = (st.minGZ + (st.ed - 1) / 2) * STUD;
-    ghost.position.set(cx, st.level * PLATE + h / 2, cz);
-    ghost.visible = true;
-
     const tint = st.valid ? 0x35ff8a : 0xff4d4d;
     if (ghostMats) {
         ghostMats.edge.color.setHex(tint);
         ghostMats.bodies.forEach(m => m.emissive.setHex(st.valid ? 0x0a2a16 : 0x400808));
     }
+
+    // Mounted-on-axle preview: explicit position + axis-aligned orientation, no footprint.
+    if (st.mount) {
+        ghost.position.set(st.mount.x, st.mount.y, st.mount.z);
+        ghost.rotation.y = mountRotation(selType, st.mount.axleChar) * Math.PI / 2;
+        ghost.visible = true;
+        footMarker.visible = false;
+        return;
+    }
+
+    const h = heightPlatesOf(selType, selSize) * PLATE;
+    const cx = (st.minGX + (st.ew - 1) / 2) * STUD;
+    const cz = (st.minGZ + (st.ed - 1) / 2) * STUD;
+    ghost.position.set(cx, st.level * PLATE + h / 2, cz);
+    ghost.rotation.y = rot * Math.PI / 2;
+    ghost.visible = true;
+
     footMarker.visible = true;
     footMarker.scale.set(st.ew * STUD, 1, st.ed * STUD);
     footMarker.position.set(cx, st.level * PLATE + 0.01, cz);
@@ -67,7 +79,7 @@ export function hideGhost() {
 
 // Nudge the ghost one stud in a screen-relative direction, keeping its level.
 export function nudge(dir) {
-    if (!selType || !ghost || !ghostState) return;
+    if (!selType || !ghost || !ghostState || ghostState.mount) return;   // no nudging axle mounts
     const a = screenAxes();
     let dgx = 0, dgz = 0;
     if (dir === 'left')  { dgx = -a.right[0]; dgz = -a.right[1]; }

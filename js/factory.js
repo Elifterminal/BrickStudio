@@ -25,8 +25,8 @@ export function makeGroup(kindId, size, colorHex, opts = {}) {
     let rotor = null, visual = g;
     if (k.spin && !ghostMode) { rotor = new THREE.Group(); g.add(rotor); visual = rotor; }
 
-    const twoSided = ['slope','islope','cslope','shaft-fluted'].includes(kindId)
-        || kindId.startsWith('arch') || kindId.startsWith('window') || !!k.spin;
+    const twoSided = ['slope','islope','cslope','curveslope','shaft-fluted'].includes(kindId)
+        || kindId.startsWith('arch') || kindId.startsWith('window') || kindId.startsWith('door') || !!k.spin;
     const bodyMat = new THREE.MeshStandardMaterial({
         color: colorHex, emissive: emissiveBase,
         roughness: 0.5, metalness: 0.12,

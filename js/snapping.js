@@ -4,8 +4,8 @@
 import * as THREE from 'three';
 import { STUD, PLATE } from './constants.js';
 import { camera, raycaster, pointer } from './scene.js';
-import { placedMeshes } from './blocks.js';
-import { heightPlatesOf } from './registry.js';
+import { placedMeshes, axles } from './blocks.js';
+import { heightPlatesOf, getKind } from './registry.js';
 import { selType, selSize, effFoot, stickyLevel, setSticky } from './selection.js';
 import { footCells, isValid } from './occupancy.js';
 
@@ -22,9 +22,32 @@ function topLevelOfHit(obj) {
     return rec ? rec.level + rec.hP : null;
 }
 
+// Nearest axle mount point (mid or either end) under the cursor, if within reach.
+function nearestAxleMount() {
+    let best = null, bestD = 1.3 * STUD;
+    const pt = new THREE.Vector3();
+    for (const a of axles) {
+        const dx = a.axleChar === 'x' ? a.halfLen : 0;
+        const dz = a.axleChar === 'z' ? a.halfLen : 0;
+        const points = [[a.cx, a.cy, a.cz], [a.cx + dx, a.cy, a.cz + dz], [a.cx - dx, a.cy, a.cz - dz]];
+        for (const [x, y, z] of points) {
+            const d = raycaster.ray.distanceToPoint(pt.set(x, y, z));
+            if (d < bestD) { bestD = d; best = { x, y, z, axleChar: a.axleChar }; }
+        }
+    }
+    return best;
+}
+
 export function computeTarget() {
     if (!selType) return null;
     raycaster.setFromCamera(pointer, camera);
+
+    // Movable parts snap onto a nearby axle; otherwise fall back to grid placement.
+    if (getKind(selType).mount === 'axle') {
+        const m = nearestAxleMount();
+        if (m) return { mount: m, valid: true };
+    }
+
     const [ew, ed] = effFoot();
     const hP = heightPlatesOf(selType, selSize);
 

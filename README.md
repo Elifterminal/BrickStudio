@@ -75,9 +75,12 @@ It shows up in the palette automatically. For a custom shape, pass your own
 ## Movable parts
 
 Wheels, propellers, and fans **spin** on their own (a real animation). The **Animation**
-toggle in the sidebar pauses them so you can build precisely. Note: they're not yet
-mechanically driven by axles — that needs a physics/constraint layer. Axles and pins are
-structural connector pieces for now.
+toggle in the sidebar pauses them so you can build precisely.
+
+**Mounting on axles:** place an axle (Technic tab), then select a wheel/propeller/fan and move
+the cursor near the axle — it snaps onto the nearest **mid or end** point and aligns its spin
+axis to the axle. Away from an axle they place freely on the grid. Note: the spin is still
+per-part, not gear-driven — the axle sets position/orientation, not power.
 
 ## Saving
 

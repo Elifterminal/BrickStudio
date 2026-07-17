@@ -170,15 +170,58 @@ export function propellerGeometry(fw, fd, h) {       // spins about Z (faces for
     return mergeGeoms(geoms);
 }
 
-export function fanGeometry(fw, fd, h) {              // spins about Y (ceiling fan)
-    const R = Math.max(fw, fd) * STUD * 0.42, N = 4, geoms = [];
-    const hub = new THREE.CylinderGeometry(STUD * 0.26, STUD * 0.26, STUD * 0.6, 14);
-    geoms.push(hub);
+export function fanGeometry(fw, fd, h) {              // spins about Z (mounts on an axle)
+    const R = Math.max(fw, fd) * STUD * 0.42, N = 6, geoms = [];
+    const hub = new THREE.CylinderGeometry(STUD * 0.24, STUD * 0.24, STUD * 0.6, 14);
+    hub.rotateX(Math.PI / 2); geoms.push(hub);
     for (let i = 0; i < N; i++) {
-        const b = new THREE.BoxGeometry(R * 1.4, STUD * 0.16, STUD * 0.4);
-        b.translate(R * 0.7, 0, 0); b.rotateY(i * 2 * Math.PI / N); geoms.push(b);
+        const b = new THREE.BoxGeometry(R * 1.3, STUD * 0.5, STUD * 0.12);
+        b.translate(R * 0.65, 0, 0); b.rotateZ(i * 2 * Math.PI / N); geoms.push(b);
     }
     return mergeGeoms(geoms);
+}
+
+// Convex curved slope: top edge is a quarter curve from back-top to front-bottom.
+export function curvedSlopeGeometry(fw, fd, h) {
+    const w = fw * STUD / 2, d = fd * STUD / 2, y = h / 2, N = 8;
+    const pts = [];
+    for (let i = 0; i <= N; i++) { const a = (i / N) * Math.PI / 2; pts.push([-d + 2 * d * Math.sin(a), -y + 2 * y * Math.cos(a)]); }
+    const tris = [];
+    for (let i = 0; i < N; i++) {
+        const [z0, y0] = pts[i], [z1, y1] = pts[i + 1];
+        tris.push([-w,y0,z0],[w,y0,z0],[w,y1,z1],  [-w,y0,z0],[w,y1,z1],[-w,y1,z1]);   // top surface
+        tris.push([-w,-y,-d],[-w,y1,z1],[-w,y0,z0]);   // left cap
+        tris.push([ w,-y,-d],[ w,y0,z0],[ w,y1,z1]);   // right cap
+    }
+    tris.push([-w,-y,-d],[w,-y,-d],[w,-y,d],  [-w,-y,-d],[w,-y,d],[-w,-y,d]);           // bottom
+    tris.push([-w,-y,-d],[-w,y,-d],[w,y,-d],  [-w,-y,-d],[w,y,-d],[w,-y,-d]);           // back wall
+    return fromTris(tris);
+}
+
+// Doorway frame: opening reaches the floor (no bottom bar).
+export function doorFrameGeometry(fw, fd, h) {
+    const L = fw * STUD, H = h, D = fd * STUD, fr = STUD * 0.34;
+    const s = new THREE.Shape();
+    s.moveTo(-L/2,-H/2); s.lineTo(L/2,-H/2); s.lineTo(L/2,H/2); s.lineTo(-L/2,H/2); s.closePath();
+    const ix = L/2 - fr, top = H/2 - fr;
+    const p = new THREE.Path();
+    p.moveTo(-ix, -H/2); p.lineTo(-ix, top); p.lineTo(ix, top); p.lineTo(ix, -H/2); p.closePath();
+    s.holes.push(p);
+    const g = new THREE.ExtrudeGeometry(s, { depth: D, bevelEnabled: false });
+    g.translate(0, 0, -D / 2);
+    return g;
+}
+
+// Door leaf: a thin panel with a small window near the top.
+export function doorLeafGeometry(fw, fd, h) {
+    const L = fw * STUD * 0.88, H = h * 0.94, D = fd * STUD * 0.28;
+    const s = new THREE.Shape();
+    s.moveTo(-L/2,-H/2); s.lineTo(L/2,-H/2); s.lineTo(L/2,H/2); s.lineTo(-L/2,H/2); s.closePath();
+    const wx = L * 0.26, wy = H * 0.14, cy = H * 0.3;
+    s.holes.push(rectPath(-wx, cy - wy, wx, cy + wy));
+    const g = new THREE.ExtrudeGeometry(s, { depth: D, bevelEnabled: false });
+    g.translate(0, 0, -D / 2);
+    return g;
 }
 
 // ---- Technic connectors ----
