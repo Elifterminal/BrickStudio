@@ -8,12 +8,18 @@ import { animating } from './motion.js';
 const MESH_TOL = 0.55 * STUD;    // gear spacing must be ~(r1+r2); forgiving for grid + mixed sizes
 const ON_AXLE = 0.3 * STUD;      // how close a part must be to an axle line to count as "on" it
 
+// Perpendicular distance & along-axis distance of a point relative to an axle (handles 'y').
+function relTo(axleChar, ax, ay, az, p) {
+    if (axleChar === 'x') return [Math.hypot(p.y - ay, p.z - az), Math.abs(p.x - ax)];
+    if (axleChar === 'z') return [Math.hypot(p.x - ax, p.y - ay), Math.abs(p.z - az)];
+    return [Math.hypot(p.x - ax, p.z - az), Math.abs(p.y - ay)];   // 'y' (vertical)
+}
+
 // Which axle a mounted part sits on (nearest axle line it lies along), or null.
 function axleForPart(p) {
     let best = null, bestD = ON_AXLE;
     for (const a of axles) {
-        const perp = a.axleChar === 'x' ? Math.hypot(p.y - a.cy, p.z - a.cz) : Math.hypot(p.x - a.cx, p.y - a.cy);
-        const along = a.axleChar === 'x' ? Math.abs(p.x - a.cx) : Math.abs(p.z - a.cz);
+        const [perp, along] = relTo(a.axleChar, a.cx, a.cy, a.cz, p);
         if (perp < bestD && along <= a.halfLen + ON_AXLE) { bestD = perp; best = a; }
     }
     return best;
@@ -21,10 +27,15 @@ function axleForPart(p) {
 
 // Two gears mesh if their axles are parallel, coplanar along the axis, and spaced by r1+r2.
 function meshes(A, B) {
-    const c = A.axle.axleChar;
-    const perp = c === 'x' ? Math.hypot(A.pos.y - B.pos.y, A.pos.z - B.pos.z) : Math.hypot(A.pos.x - B.pos.x, A.pos.y - B.pos.y);
-    const along = c === 'x' ? Math.abs(A.pos.x - B.pos.x) : Math.abs(A.pos.z - B.pos.z);
+    const [perp, along] = relTo(A.axle.axleChar, B.pos.x, B.pos.y, B.pos.z, A.pos);
     return Math.abs(perp - (A.r + B.r)) < MESH_TOL && along < 0.6 * STUD;
+}
+
+// Bevel gears mesh across perpendicular axles when they meet at a corner (~touching).
+function bevelMeshes(A, B) {
+    if (!A.bevel || !B.bevel || A.axle.axleChar === B.axle.axleChar) return false;
+    const dist = Math.hypot(A.pos.x - B.pos.x, A.pos.y - B.pos.y, A.pos.z - B.pos.z);
+    return dist < (A.r + B.r);
 }
 
 // Assign an angular velocity (omega) to every axle.
@@ -46,13 +57,15 @@ function computeDrive() {
     for (const rec of parts) if (rec.role === 'movable' && !omega.has(rec._axle.id)) omega.set(rec._axle.id, rec.group.userData.spin.speed);
 
     // Build the gear-mesh graph between axles.
-    const gears = parts.filter(r => r.role === 'gear').map(r => ({ axle: r._axle, r: r.radius, pos: r.group.position }));
+    const gears = parts.filter(r => r.role === 'gear').map(r => ({ axle: r._axle, r: r.radius, pos: r.group.position, bevel: r.bevel }));
     const adj = new Map();
     const link = (id, other, ratio) => { if (!adj.has(id)) adj.set(id, []); adj.get(id).push({ other, ratio }); };
     for (let i = 0; i < gears.length; i++)
         for (let j = i + 1; j < gears.length; j++) {
             const A = gears[i], B = gears[j];
-            if (A.axle.id === B.axle.id || A.axle.axleChar !== B.axle.axleChar || !meshes(A, B)) continue;
+            if (A.axle.id === B.axle.id) continue;
+            const parallel = A.axle.axleChar === B.axle.axleChar && meshes(A, B);   // spur gears
+            if (!parallel && !bevelMeshes(A, B)) continue;                          // or bevel (90°)
             link(A.axle.id, B.axle.id, -A.r / B.r);   // opposite direction, inverse tooth ratio
             link(B.axle.id, A.axle.id, -B.r / A.r);
         }

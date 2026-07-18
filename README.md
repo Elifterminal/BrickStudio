@@ -86,6 +86,9 @@ vertical **side face**, sticking out perpendicular — hover a side and it attac
 to toggle whether the axle's **end** or **middle** sits on the face. Great for a windmill arm
 poking out of a tower.
 
+**Vertical axles:** press **V** to stand the selected axle up (along Y) — hover a surface and
+it rises from it. Gears/wheels mount on vertical shafts the same way as horizontal ones.
+
 ## Gears & driveline (mechanics)
 
 The first real mechanics: **one axle can turn another**.
@@ -98,6 +101,8 @@ The first real mechanics: **one axle can turn another**.
   propagates through a whole chain (including compound gears sharing an axle).
 - **Auto-line-up:** when you place a gear near an existing gear on a parallel axle, it snaps
   *along* the axle to sit coplanar with it, so they mesh cleanly.
+- **Bevel gears (90°)** mesh across *perpendicular* axles — pair one on a horizontal axle with
+  one on a vertical axle at the corner to turn power from horizontal to vertical (or vice-versa).
 
 Try: two axles the right distance apart (2 studs for two 1x1 gears, 4 for two 2x2), a crank on
 one, a gear on each where they meet. Turn Animation on — the second axle spins the other way.

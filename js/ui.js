@@ -2,7 +2,7 @@
 import { allKinds, categories, kindsInCategory } from './registry.js';
 import { COLORS } from './colors.js';
 import { THEMES } from './themes.js';
-import { setPiece, setColor, setRot, setSticky, selType, selSize, selColor, axleMountMode } from './selection.js';
+import { setPiece, setColor, setRot, setSticky, selType, selSize, selColor, axleMountMode, axleVertical } from './selection.js';
 import { rebuildGhost } from './ghost.js';
 import { setHovered, clearAll } from './blocks.js';
 import { applyTheme } from './scene.js';
@@ -167,7 +167,7 @@ export function deselect() {
 export function updateModePill() {
     const el = modePill();
     if (selType) {
-        const extra = selType === 'axle' ? ` · M=${axleMountMode}` : '';
+        const extra = selType === 'axle' ? ` · ${axleVertical ? 'vertical' : 'horizontal'} · M=${axleMountMode}` : '';
         el.textContent = `BUILD: ${selType} ${selSize}${extra}`;
         el.style.borderColor = 'var(--accent)';
         el.style.color = 'var(--accent)';

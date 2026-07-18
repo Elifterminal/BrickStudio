@@ -6,7 +6,7 @@ import { STUD, PLATE } from './constants.js';
 import { camera, raycaster, pointer } from './scene.js';
 import { placedMeshes, placedBlocks, axles } from './blocks.js';
 import { heightPlatesOf, getKind, footprint } from './registry.js';
-import { selType, selSize, effFoot, stickyLevel, setSticky, axleMountMode } from './selection.js';
+import { selType, selSize, effFoot, stickyLevel, setSticky, axleMountMode, axleVertical } from './selection.js';
 import { footCells, isValid } from './occupancy.js';
 
 const UP = new THREE.Vector3(0, 1, 0);
@@ -22,20 +22,34 @@ function topLevelOfHit(obj) {
     return rec ? rec.level + rec.hP : null;
 }
 
+// Unit vector along an axle (handles vertical 'y').
+const axleVec = a => a.axleChar === 'x' ? [a.halfLen, 0, 0] : a.axleChar === 'z' ? [0, 0, a.halfLen] : [0, a.halfLen, 0];
+// The coordinate that runs ALONG an axle, for a point.
+const alongOf = (axleChar, p) => axleChar === 'x' ? p.x : axleChar === 'z' ? p.z : p.y;
+
 // Nearest axle mount point (mid or either end) under the cursor, if within reach.
 function nearestAxleMount() {
     let best = null, bestD = 1.3 * STUD;
     const pt = new THREE.Vector3();
     for (const a of axles) {
-        const dx = a.axleChar === 'x' ? a.halfLen : 0;
-        const dz = a.axleChar === 'z' ? a.halfLen : 0;
-        const points = [[a.cx, a.cy, a.cz], [a.cx + dx, a.cy, a.cz + dz], [a.cx - dx, a.cy, a.cz - dz]];
+        const [vx, vy, vz] = axleVec(a);
+        const points = [[a.cx, a.cy, a.cz], [a.cx + vx, a.cy + vy, a.cz + vz], [a.cx - vx, a.cy - vy, a.cz - vz]];
         for (const [x, y, z] of points) {
             const d = raycaster.ray.distanceToPoint(pt.set(x, y, z));
             if (d < bestD) { bestD = d; best = { x, y, z, axleChar: a.axleChar }; }
         }
     }
     return best;
+}
+
+// Stand an axle vertically on the surface under the cursor (bottom on the surface).
+function verticalAxleMount() {
+    const halfLen = Math.max(...footprint(selSize)) * STUD / 2;
+    const hits = raycaster.intersectObjects(placedMeshes, false);
+    let sx, sz, sy;
+    if (hits.length) { sx = hits[0].point.x; sz = hits[0].point.z; sy = Math.round(hits[0].point.y / PLATE) * PLATE; }
+    else { const p = projectToLevel(0); if (!p) return null; sx = p.x; sz = p.z; sy = 0; }
+    return { x: Math.round(sx / STUD) * STUD, y: sy + halfLen, z: Math.round(sz / STUD) * STUD, axleChar: 'y' };
 }
 
 // Snap an axle to the vertical side face under the cursor, sticking out perpendicular.
@@ -59,6 +73,11 @@ function sideMountForAxle() {
 }
 
 const gearRadius = size => Math.max(...footprint(size)) * STUD * 0.5;   // pitch radius = half size in studs
+// Perpendicular distance from a point to an axle line (handles vertical 'y').
+const perpTo = (a, p) => a.axleChar === 'x' ? Math.hypot(p.y - a.cy, p.z - a.cz)
+    : a.axleChar === 'z' ? Math.hypot(p.x - a.cx, p.y - a.cy)
+    : Math.hypot(p.x - a.cx, p.z - a.cz);
+const midOf = a => a.axleChar === 'x' ? a.cx : a.axleChar === 'z' ? a.cz : a.cy;
 
 // Place a gear on the axle under the cursor, snapping ALONG the axle so it lines up
 // (coplanar) with a nearby gear on a parallel axle — so they mesh.
@@ -67,28 +86,26 @@ function gearMountSnap() {
     const e0 = new THREE.Vector3(), e1 = new THREE.Vector3(), tmp = new THREE.Vector3();
     let target = null, bestD = (1.4 * STUD) ** 2, along = 0;
     for (const a of axles) {
-        const dx = a.axleChar === 'x' ? a.halfLen : 0, dz = a.axleChar === 'z' ? a.halfLen : 0;
-        e0.set(a.cx - dx, a.cy, a.cz - dz); e1.set(a.cx + dx, a.cy, a.cz + dz);
+        const [vx, vy, vz] = axleVec(a);
+        e0.set(a.cx - vx, a.cy - vy, a.cz - vz); e1.set(a.cx + vx, a.cy + vy, a.cz + vz);
         const d = raycaster.ray.distanceSqToSegment(e0, e1, null, tmp);
-        if (d < bestD) { bestD = d; target = a; along = a.axleChar === 'x' ? tmp.x : tmp.z; }
+        if (d < bestD) { bestD = d; target = a; along = alongOf(a.axleChar, tmp); }
     }
     if (!target) return null;
 
-    const mid = target.axleChar === 'x' ? target.cx : target.cz;
+    const mid = midOf(target);
     const cands = [mid, mid + target.halfLen, mid - target.halfLen];
     for (const rec of placedBlocks) {
         if (rec.role !== 'gear' || !rec._axle || rec._axle.axleChar !== target.axleChar) continue;
         const gp = rec.group.position;
-        const perp = target.axleChar === 'x' ? Math.hypot(gp.y - target.cy, gp.z - target.cz)
-                                             : Math.hypot(gp.x - target.cx, gp.y - target.cy);
-        if (Math.abs(perp - (newR + rec.radius)) < 0.55 * STUD) cands.push(target.axleChar === 'x' ? gp.x : gp.z);
+        if (Math.abs(perpTo(target, gp) - (newR + rec.radius)) < 0.55 * STUD) cands.push(alongOf(target.axleChar, gp));
     }
     let snap = cands[0], bd = Infinity;
     for (const c of cands) { const dd = Math.abs(c - along); if (dd < bd) { bd = dd; snap = c; } }
 
-    return target.axleChar === 'x'
-        ? { x: snap, y: target.cy, z: target.cz, axleChar: 'x' }
-        : { x: target.cx, y: target.cy, z: snap, axleChar: 'z' };
+    if (target.axleChar === 'x') return { x: snap, y: target.cy, z: target.cz, axleChar: 'x' };
+    if (target.axleChar === 'z') return { x: target.cx, y: target.cy, z: snap, axleChar: 'z' };
+    return { x: target.cx, y: snap, z: target.cz, axleChar: 'y' };
 }
 
 export function computeTarget() {
@@ -104,8 +121,12 @@ export function computeTarget() {
         const m = nearestAxleMount();
         if (m) return { mount: m, valid: true };
     }
-    // Axles can snap to a block's side face (else fall through to grid / on-top placement).
-    if (getKind(selType).sideMount) {
+    // Axles: vertical mode stands them up; otherwise snap to a side face, else grid/on-top.
+    if (kind.sideMount && axleVertical) {
+        const vm = verticalAxleMount();
+        if (vm) return { mount: vm, valid: true };
+    }
+    if (kind.sideMount) {
         const sm = sideMountForAxle();
         if (sm) return { mount: sm, valid: true };
     }

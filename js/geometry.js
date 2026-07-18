@@ -258,6 +258,20 @@ export function gearGeometry(fw, fd, h) {
     return mergeGeoms(geoms);
 }
 
+// Bevel gear: a cone frustum with teeth on the wide rim (transfers power 90°). Axis along X.
+export function bevelGeometry(fw, fd, h) {
+    const size = Math.max(fw, fd), R = size * STUD * 0.5, teeth = size * 8, len = STUD * 0.55;
+    const geoms = [];
+    const cone = new THREE.CylinderGeometry(R * 0.42, R * 0.72, len, 24);
+    cone.rotateZ(Math.PI / 2); geoms.push(cone);
+    const toothLen = R * 0.3, toothW = (2 * Math.PI * R / teeth) * 0.5;
+    for (let i = 0; i < teeth; i++) {
+        const t = new THREE.BoxGeometry(len * 0.55, toothLen, toothW);
+        t.translate(-len * 0.18, R - toothLen / 2, 0); t.rotateX(i * 2 * Math.PI / teeth); geoms.push(t);
+    }
+    return mergeGeoms(geoms);
+}
+
 export function crankGeometry(fw, fd, h) {
     const geoms = [];
     const hub = new THREE.CylinderGeometry(STUD * 0.22, STUD * 0.22, STUD * 0.5, 12); hub.rotateZ(Math.PI / 2); geoms.push(hub);

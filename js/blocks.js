@@ -1,4 +1,5 @@
 // Placed pieces: creation, deletion, occupancy writes, and erase-mode hover/pick.
+import * as THREE from 'three';
 import { PLATE } from './constants.js';
 import { scene, camera, raycaster, pointer } from './scene.js';
 import { makeGroup, disposeGroup, bodyColor } from './factory.js';
@@ -19,11 +20,12 @@ function effFoot(size, rotation) {
     return (rotation % 2) ? [d, w] : [w, d];
 }
 
-// Which 90° turn aligns a part's local long/spin axis to the axle direction.
-// Movable parts spin about spin.axis; an axle's own geometry lies along local X.
-export function mountRotation(kindId, axleChar) {
+// Orient a group so its local long/spin axis points along a world axle direction (x/y/z).
+// Movable parts spin about spin.axis; axles/gears lie along local X. Works for vertical axles.
+const AXV = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: new THREE.Vector3(0, 0, 1) };
+export function orientToAxis(group, kindId, axleChar) {
     const localAxis = getKind(kindId).spin?.axis || 'x';
-    return localAxis === axleChar ? 0 : 1;
+    group.quaternion.setFromUnitVectors(AXV[localAxis], AXV[axleChar]);
 }
 
 function registerBlock(g, voxels, spec) {
@@ -78,12 +80,14 @@ function addMounted(spec) {
     const k = getKind(type);
     const g = makeGroup(type, size, color);
     g.position.set(mount.x, mount.y, mount.z);
-    g.rotation.y = mountRotation(type, mount.axleChar) * Math.PI / 2;
+    orientToAxis(g, type, mount.axleChar);
     scene.add(g);
     const rec = registerBlock(g, [], { type, size, color, mount, level: 0 });
     const [fw, fd] = footprint(size);
-    rec.role = k.gear ? 'gear' : (k.driver ? 'crank' : (k.spin ? 'movable' : null));
-    rec.radius = k.gear ? Math.max(fw, fd) * STUD * 0.5 : 0;   // pitch radius = half size in studs (teeth = size*8)
+    const isGear = k.gear || k.bevel;
+    rec.role = isGear ? 'gear' : (k.driver ? 'crank' : (k.spin ? 'movable' : null));
+    rec.radius = isGear ? Math.max(fw, fd) * STUD * 0.5 : 0;   // pitch radius = half size in studs (teeth = size*8)
+    rec.bevel = !!k.bevel;
     rec.speed = k.driver || 0;
     return true;
 }

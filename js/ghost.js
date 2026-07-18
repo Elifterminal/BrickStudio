@@ -4,7 +4,7 @@ import { STUD, PLATE } from './constants.js';
 import { scene, camera } from './scene.js';
 import { makeGroup, disposeGroup, bodyColor } from './factory.js';
 import { computeTarget } from './snapping.js';
-import { mountRotation } from './blocks.js';
+import { orientToAxis } from './blocks.js';
 import { heightPlatesOf } from './registry.js';
 import { selType, selSize, selColor, rot, effFoot } from './selection.js';
 import { footCells, isValid } from './occupancy.js';
@@ -53,7 +53,7 @@ function positionGhost(st) {
     // Mounted-on-axle preview: explicit position + axis-aligned orientation, no footprint.
     if (st.mount) {
         ghost.position.set(st.mount.x, st.mount.y, st.mount.z);
-        ghost.rotation.y = mountRotation(selType, st.mount.axleChar) * Math.PI / 2;
+        orientToAxis(ghost, selType, st.mount.axleChar);
         ghost.visible = true;
         footMarker.visible = false;
         return;
