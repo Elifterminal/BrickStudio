@@ -92,15 +92,18 @@ The first real mechanics: **one axle can turn another**.
 
 - **Crank** (Mechanics tab) drives the axle it's mounted on. A mounted propeller/fan/wheel also
   drives its axle, so a windmill's blades can power a drivetrain.
-- **Gears** mount on axles. Put a gear on each of two **parallel axles spaced by the sum of the
-  gears' radii** and they **mesh** — the follower turns the opposite way at the tooth ratio
-  (a small gear driving a big one turns it slower, and vice-versa). Rotation propagates through
-  a whole chain of meshed gears, and anything on a driven axle (wheels, more gears) turns with it.
+- **Gears** are teeth-based (1x1 = 8t, 2x2 = 16t, 3x3 = 24t) with pitch radius = size in studs,
+  so meshing spacing always lands on the grid and ratios are exact: a 16t driving an 8t turns it
+  **2× faster** (opposite direction); an 8t driving a 24t turns it **⅓ as fast**. Rotation
+  propagates through a whole chain (including compound gears sharing an axle).
+- **Auto-line-up:** when you place a gear near an existing gear on a parallel axle, it snaps
+  *along* the axle to sit coplanar with it, so they mesh cleanly.
 
-Try: two 4x1 axles two studs apart, a crank on one, a 2x2 gear on each where they meet.
-Turn Animation on and the second axle spins the other way.
+Try: two axles the right distance apart (2 studs for two 1x1 gears, 4 for two 2x2), a crank on
+one, a gear on each where they meet. Turn Animation on — the second axle spins the other way.
 
-Still simple — no torque/load, no conflict handling if a chain is over-constrained.
+This is kinematics (speed + direction), not dynamics — no torque/load yet, which is why gear
+"power" doesn't factor until there's something to push against.
 
 ## Saving
 

@@ -241,16 +241,17 @@ export function pinGeometry(fw, fd, h) {              // short connector pin alo
 }
 
 // ---- Mechanics: gear (disc + teeth) and crank (driver handle). Axis along X. ----
+// Pitch radius = size-in-studs, teeth = size*8 -> gears mesh at integer stud spacing,
+// and the tooth ratio equals the size ratio (clean 2:1, 3:1, ...).
 export function gearGeometry(fw, fd, h) {
-    const R = Math.min(fw, fd) * STUD * 0.5;             // pitch radius (used by the mesh solver)
-    const thick = Math.min(fw, fd) * STUD * 0.35;
-    const N = Math.max(8, Math.round(R / (STUD * 0.16)));
+    const size = Math.max(fw, fd), R = size * STUD, teeth = size * 8, thick = STUD * 0.6;
     const geoms = [];
-    const disc = new THREE.CylinderGeometry(R * 0.9, R * 0.9, thick, 20);
+    const disc = new THREE.CylinderGeometry(R * 0.86, R * 0.86, thick, 28);
     disc.rotateZ(Math.PI / 2); geoms.push(disc);
-    for (let i = 0; i < N; i++) {
-        const t = new THREE.BoxGeometry(thick * 0.8, STUD * 0.2, STUD * 0.22);
-        t.translate(0, R, 0); t.rotateX(i * 2 * Math.PI / N); geoms.push(t);
+    const toothW = (2 * Math.PI * R / teeth) * 0.55;
+    for (let i = 0; i < teeth; i++) {
+        const t = new THREE.BoxGeometry(thick * 0.85, STUD * 0.28, toothW);
+        t.translate(0, R, 0); t.rotateX(i * 2 * Math.PI / teeth); geoms.push(t);
     }
     return mergeGeoms(geoms);
 }

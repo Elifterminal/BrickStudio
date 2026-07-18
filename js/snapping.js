@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { STUD, PLATE } from './constants.js';
 import { camera, raycaster, pointer } from './scene.js';
-import { placedMeshes, axles } from './blocks.js';
+import { placedMeshes, placedBlocks, axles } from './blocks.js';
 import { heightPlatesOf, getKind, footprint } from './registry.js';
 import { selType, selSize, effFoot, stickyLevel, setSticky, axleMountMode } from './selection.js';
 import { footCells, isValid } from './occupancy.js';
@@ -58,12 +58,49 @@ function sideMountForAxle() {
     return { x: Math.round(hit.point.x / STUD) * STUD, y, z: hit.point.z + dir * off, axleChar };
 }
 
+const gearRadius = size => Math.max(...footprint(size)) * STUD;   // pitch radius = size in studs
+
+// Place a gear on the axle under the cursor, snapping ALONG the axle so it lines up
+// (coplanar) with a nearby gear on a parallel axle — so they mesh.
+function gearMountSnap() {
+    const newR = gearRadius(selSize);
+    const e0 = new THREE.Vector3(), e1 = new THREE.Vector3(), tmp = new THREE.Vector3();
+    let target = null, bestD = (1.4 * STUD) ** 2, along = 0;
+    for (const a of axles) {
+        const dx = a.axleChar === 'x' ? a.halfLen : 0, dz = a.axleChar === 'z' ? a.halfLen : 0;
+        e0.set(a.cx - dx, a.cy, a.cz - dz); e1.set(a.cx + dx, a.cy, a.cz + dz);
+        const d = raycaster.ray.distanceSqToSegment(e0, e1, null, tmp);
+        if (d < bestD) { bestD = d; target = a; along = a.axleChar === 'x' ? tmp.x : tmp.z; }
+    }
+    if (!target) return null;
+
+    const mid = target.axleChar === 'x' ? target.cx : target.cz;
+    const cands = [mid, mid + target.halfLen, mid - target.halfLen];
+    for (const rec of placedBlocks) {
+        if (rec.role !== 'gear' || !rec._axle || rec._axle.axleChar !== target.axleChar) continue;
+        const gp = rec.group.position;
+        const perp = target.axleChar === 'x' ? Math.hypot(gp.y - target.cy, gp.z - target.cz)
+                                             : Math.hypot(gp.x - target.cx, gp.y - target.cy);
+        if (Math.abs(perp - (newR + rec.radius)) < 0.55 * STUD) cands.push(target.axleChar === 'x' ? gp.x : gp.z);
+    }
+    let snap = cands[0], bd = Infinity;
+    for (const c of cands) { const dd = Math.abs(c - along); if (dd < bd) { bd = dd; snap = c; } }
+
+    return target.axleChar === 'x'
+        ? { x: snap, y: target.cy, z: target.cz, axleChar: 'x' }
+        : { x: target.cx, y: target.cy, z: snap, axleChar: 'z' };
+}
+
 export function computeTarget() {
     if (!selType) return null;
     raycaster.setFromCamera(pointer, camera);
+    const kind = getKind(selType);
 
-    // Movable parts snap onto a nearby axle; otherwise fall back to grid placement.
-    if (getKind(selType).mount === 'axle') {
+    // Gears line up with a neighbouring gear; other movable parts snap to an axle mid/end.
+    if (kind.gear) {
+        const gm = gearMountSnap();
+        if (gm) return { mount: gm, valid: true };
+    } else if (kind.mount === 'axle') {
         const m = nearestAxleMount();
         if (m) return { mount: m, valid: true };
     }
