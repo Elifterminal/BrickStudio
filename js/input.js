@@ -1,33 +1,48 @@
 // Pointer + keyboard handling. Click = place/erase; left-drag = orbit (OrbitControls).
-import { renderer, pointer, dolly } from './scene.js';
+// With a Belt/Chain tool selected, drag from a pulley handle to another to connect them.
+import { renderer, pointer, camera, raycaster, controls, dolly } from './scene.js';
 import { selType, setRot, rot, toggleAxleMount, toggleAxleVertical, toggleMotorDir } from './selection.js';
 import { updateGhost, hideGhost, applyRotation, nudge, ghostState } from './ghost.js';
 import { placeAt, deleteRoot, rootUnder, setHovered } from './blocks.js';
+import { getKind } from './registry.js';
+import { startDrag, dragActive, updateDrag, endDrag, handleUnderRay } from './belts.js';
 import { saveBuild } from './persistence.js';
 import { deselect, updateModePill } from './ui.js';
 
 let downPos = null, moved = false;
+const toolOf = () => getKind(selType)?.tool;
 
 export function setupEvents() {
     const el = renderer.domElement;
 
     el.addEventListener('pointerdown', e => {
-        if (e.button === 0) { downPos = { x: e.clientX, y: e.clientY }; moved = false; }
+        if (e.button !== 0) return;
+        if (toolOf()) {                                   // belt/chain: start a drag off a handle
+            updatePointer(e); raycaster.setFromCamera(pointer, camera);
+            const h = handleUnderRay(raycaster);
+            if (h) { controls.enabled = false; startDrag(h); return; }
+        }
+        downPos = { x: e.clientX, y: e.clientY }; moved = false;
     });
 
     el.addEventListener('pointermove', e => {
         updatePointer(e);
+        if (dragActive()) { raycaster.setFromCamera(pointer, camera); updateDrag(raycaster); return; }
         if (downPos && Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) > 5) moved = true;
-        if (selType) updateGhost();
-        else setHovered(rootUnder());
+        if (selType && !toolOf()) updateGhost();
+        else if (!selType) setHovered(rootUnder());
     });
 
     el.addEventListener('pointerup', e => {
         if (e.button !== 0) return;
-        const click = downPos && !moved;   // a tap, not an orbit drag
-        downPos = null;
+        if (dragActive()) {                               // finish a belt drag
+            raycaster.setFromCamera(pointer, camera);
+            if (endDrag(handleUnderRay(raycaster), toolOf() === 'chain')) saveBuild();
+            controls.enabled = true; downPos = null; return;
+        }
+        const click = downPos && !moved; downPos = null;
         if (!click) return;
-        if (selType) { if (placeAt(ghostState)) saveBuild(); }
+        if (selType) { if (!toolOf() && placeAt(ghostState)) saveBuild(); }
         else { const r = rootUnder(); if (r) { deleteRoot(r); saveBuild(); } }
     });
 

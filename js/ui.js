@@ -5,6 +5,7 @@ import { THEMES } from './themes.js';
 import { setPiece, setColor, setRot, setSticky, selType, selSize, selColor, axleMountMode, axleVertical, motorDir } from './selection.js';
 import { rebuildGhost } from './ghost.js';
 import { setHovered, clearAll } from './blocks.js';
+import { showHandles, hideHandles } from './belts.js';
 import { applyTheme } from './scene.js';
 import { saveBuild, exportBuild, importBuild, listSlots, saveSlot, loadSlot, deleteSlot } from './persistence.js';
 import { toggleAnimating } from './motion.js';
@@ -117,6 +118,16 @@ function renderCategory(cat) {
     const pal = document.getElementById('palette');
     pal.innerHTML = '';
     kindsInCategory(cat).forEach(kind => {
+        if (kind.tool) {                                  // belt/chain: one full-width drag button
+            const b = document.createElement('button');
+            b.className = 'block-button w-full mt-1' + (selType === kind.id ? ' active' : '');
+            b.style.padding = '6px';
+            b.textContent = kind.label;
+            b.dataset.type = kind.id; b.dataset.size = kind.sizes[0];
+            b.addEventListener('click', () => selectPiece(b));
+            pal.appendChild(b);
+            return;
+        }
         const h = document.createElement('h2');
         h.className = 'section';
         h.textContent = kind.label.toUpperCase();
@@ -154,12 +165,14 @@ function selectPiece(btn) {
     setHovered(null);
     rebuildGhost();
     updateModePill();
+    if (selType && getKind(selType).tool) showHandles(); else hideHandles();
 }
 
 export function deselect() {
     document.querySelectorAll('#palette .block-button').forEach(b => b.classList.remove('active'));
     setPiece(null, null);
     setHovered(null);
+    hideHandles();
     rebuildGhost();
     updateModePill();
 }
@@ -167,6 +180,11 @@ export function deselect() {
 export function updateModePill() {
     const el = modePill();
     if (selType) {
+        if (getKind(selType).tool) {
+            el.textContent = `${selType.toUpperCase()} — drag pulley handle → pulley handle`;
+            el.style.borderColor = 'var(--accent)'; el.style.color = 'var(--accent)';
+            return;
+        }
         const extra = selType === 'axle' ? ` · ${axleVertical ? 'vertical' : 'horizontal'} · M=${axleMountMode}`
             : getKind(selType)?.driver ? ` · ${motorDir > 0 ? 'CW' : 'CCW'}` : '';
         el.textContent = `BUILD: ${selType} ${selSize}${extra}`;

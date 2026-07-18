@@ -112,6 +112,7 @@ export function computeTarget() {
     if (!selType) return null;
     raycaster.setFromCamera(pointer, camera);
     const kind = getKind(selType);
+    if (kind.tool) return null;                  // belt/chain are drag tools, not placed pieces
 
     // Gears line up with a neighbouring gear; other movable parts snap to an axle mid/end.
     if (kind.gear) {

@@ -1,6 +1,7 @@
 // Save / load builds. Auto-persists to localStorage so a build survives a refresh,
 // plus Export/Import of a JSON file for backup and sharing.
 import { placedBlocks, addBlock, clearAll } from './blocks.js';
+import { serializeBelts, restoreBelts, clearBelts } from './belts.js';
 
 const KEY = 'brickstudio.build.v1';        // the auto-saved current build
 const SLOTS_KEY = 'brickstudio.slots.v1';  // named saves { name: {v, blocks} }
@@ -16,7 +17,7 @@ const SLOTS_KEY = 'brickstudio.slots.v1';  // named saves { name: {v, blocks} }
 })();
 
 export function serialize() {
-    return { v: 1, blocks: placedBlocks.map(b => b.spec) };
+    return { v: 1, blocks: placedBlocks.map(b => b.spec), belts: serializeBelts() };
 }
 
 // ---- Named build slots ----
@@ -34,7 +35,7 @@ export function saveSlot(name) {
 export function loadSlot(name) {
     const o = readSlots();
     if (!o[name]) return 0;
-    const n = restore(o[name].blocks || []);
+    const n = restore(o[name].blocks || [], o[name].belts || []);
     saveBuild();                        // make the loaded build the current one
     return n;
 }
@@ -54,15 +55,19 @@ export function loadBuild() {
     try {
         const raw = localStorage.getItem(KEY);
         if (!raw) return 0;
-        return restore(JSON.parse(raw).blocks || []);
+        const data = JSON.parse(raw);
+        return restore(data.blocks || [], data.belts || []);
     } catch (e) { console.warn('Brick Studio: load failed', e); return 0; }
 }
 
-// Rebuild from an array of specs. Bottom-up so supports exist first; trusts the data.
-export function restore(specs) {
+// Rebuild from arrays of specs. Bottom-up so supports exist first; trusts the data.
+// Belts are recreated after the blocks (pulleys) exist.
+export function restore(specs, beltSpecs) {
     clearAll();
+    clearBelts();
     let n = 0;
     specs.slice().sort((a, b) => a.level - b.level).forEach(sp => { if (addBlock(sp, { validate: false })) n++; });
+    restoreBelts(beltSpecs);
     return n;
 }
 
@@ -81,7 +86,7 @@ export function importBuild(file, done) {
     reader.onload = () => {
         try {
             const data = JSON.parse(reader.result);
-            const n = restore(data.blocks || []);
+            const n = restore(data.blocks || [], data.belts || []);
             saveBuild();
             done && done(n);
         } catch (e) { console.warn('Brick Studio: import failed', e); done && done(-1); }

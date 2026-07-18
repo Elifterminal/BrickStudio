@@ -110,6 +110,15 @@ one, a gear on each where they meet. Turn Animation on — the second axle spins
 This is kinematics (speed + direction), not dynamics — no torque/load yet, which is why gear
 "power" doesn't factor until there's something to push against.
 
+## Pulleys, belts & chains
+
+- **Motors** (Mechanics tab) drive their axle; press **F** to choose **CW/CCW** before placing.
+- **Pulleys** are grooved wheels on axles. Pick the **Belt** or **Chain** tool and **drag** from a
+  pulley's top/bottom **handle** to another pulley's handle to link them.
+- **Direction is set by routing:** top→top (or bottom→bottom) = **open belt → same direction**;
+  top→bottom = **crossed → reversed**. Speed couples by pulley radius. Chains behave the same,
+  toothed look. Build complex systems with several pairwise belts (a triangle = 3 belts).
+
 ## Saving
 
 - Builds **auto-save to `localStorage`** on every place/delete, so they survive a refresh.

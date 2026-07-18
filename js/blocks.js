@@ -7,6 +7,7 @@ import { getKind, heightPlatesOf, footprint } from './registry.js';
 import { selType, selSize, selColor, rot, motorDir } from './selection.js';
 import { STUD } from './constants.js';
 import { addVoxels, removeVoxels, isValid, footCells } from './occupancy.js';
+import { registerPulley, unregisterPulley, deleteBeltsFor } from './belts.js';
 
 export const placedBlocks = [];   // { id, group, voxels, meshes, level, hP, spec }
 export const placedMeshes = [];   // flattened child meshes, for raycasting
@@ -85,10 +86,11 @@ function addMounted(spec) {
     const rec = registerBlock(g, [], { type, size, color, mount, level: 0 });
     const [fw, fd] = footprint(size);
     const isGear = k.gear || k.bevel;
-    rec.role = isGear ? 'gear' : (k.driver ? 'crank' : (k.spin ? 'movable' : null));
-    rec.radius = isGear ? Math.max(fw, fd) * STUD * 0.5 : 0;   // pitch radius = half size in studs (teeth = size*8)
+    rec.role = isGear ? 'gear' : (k.driver ? 'crank' : (k.pulley ? 'pulley' : (k.spin ? 'movable' : null)));
+    rec.radius = (isGear || k.pulley) ? Math.max(fw, fd) * STUD * 0.5 : 0;   // pitch radius = half size in studs
     rec.bevel = !!k.bevel;
     rec.speed = (k.driver || 0) * (spec.dir || 1);
+    if (k.pulley) registerPulley(rec);
     return true;
 }
 
@@ -111,6 +113,7 @@ export function deleteRoot(root) {
     removeVoxels(rec.voxels);
     const ai = axles.findIndex(a => a.id === rec.id);
     if (ai !== -1) axles.splice(ai, 1);
+    if (rec.role === 'pulley') { unregisterPulley(rec); deleteBeltsFor(rec); }
     rec.meshes.forEach(m => { const i = placedMeshes.indexOf(m); if (i !== -1) placedMeshes.splice(i, 1); });
     scene.remove(rec.group);
     disposeGroup(rec.group);

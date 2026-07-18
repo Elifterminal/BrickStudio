@@ -3,6 +3,7 @@
 // an axle) keep their own idle spin. Degrades to "no motion" cleanly when nothing drives.
 import { STUD } from './constants.js';
 import { axles, placedBlocks } from './blocks.js';
+import { belts } from './belts.js';
 import { animating } from './motion.js';
 
 const MESH_TOL = 0.55 * STUD;    // gear spacing must be ~(r1+r2); forgiving for grid + mixed sizes
@@ -69,6 +70,16 @@ function computeDrive() {
             link(A.axle.id, B.axle.id, -A.r / B.r);   // opposite direction, inverse tooth ratio
             link(B.axle.id, A.axle.id, -B.r / A.r);
         }
+
+    // Belts/chains couple the two pulleys' axles: speed by radius, direction by routing
+    // (same-side = open belt = same direction; opposite sides = crossed = reversed).
+    for (const belt of belts) {
+        const A = belt.aPulley, B = belt.bPulley;
+        if (!A._axle || !B._axle || A._axle.id === B._axle.id) continue;
+        const sign = belt.aSide === belt.bSide ? 1 : -1;
+        link(A._axle.id, B._axle.id, sign * A.radius / B.radius);
+        link(B._axle.id, A._axle.id, sign * B.radius / A.radius);
+    }
 
     // Propagate omega out from the driven axles through the gear graph.
     const queue = [...omega.keys()];

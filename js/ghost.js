@@ -5,7 +5,7 @@ import { scene, camera } from './scene.js';
 import { makeGroup, disposeGroup, bodyColor } from './factory.js';
 import { computeTarget } from './snapping.js';
 import { orientToAxis } from './blocks.js';
-import { heightPlatesOf } from './registry.js';
+import { heightPlatesOf, getKind } from './registry.js';
 import { selType, selSize, selColor, rot, effFoot } from './selection.js';
 import { footCells, isValid } from './occupancy.js';
 
@@ -23,7 +23,7 @@ export function rebuildGhost() {
     if (ghost) { scene.remove(ghost); disposeGroup(ghost); ghost = null; ghostMats = null; }
     if (footMarker) footMarker.visible = false;
     ghostState = null;
-    if (!selType) return;
+    if (!selType || getKind(selType).tool) return;   // no ghost for belt/chain drag tools
     ghost = makeGroup(selType, selSize, bodyColor(selType, selColor), { ghost: true });
     ghost.rotation.y = rot * Math.PI / 2;
     ghost.visible = false;

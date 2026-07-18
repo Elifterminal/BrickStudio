@@ -280,6 +280,16 @@ export function crankGeometry(fw, fd, h) {
     return mergeGeoms(geoms);
 }
 
+// Pulley: a grooved wheel (two flanges + narrower core). Belts wrap the rim. Axis along X.
+export function pulleyGeometry(fw, fd, h) {
+    const size = Math.max(fw, fd), R = size * STUD * 0.5, w = STUD * 0.5;
+    const geoms = [];
+    const f1 = new THREE.CylinderGeometry(R, R, w * 0.25, 24); f1.rotateZ(Math.PI / 2); f1.translate(w * 0.35, 0, 0); geoms.push(f1);
+    const f2 = new THREE.CylinderGeometry(R, R, w * 0.25, 24); f2.rotateZ(Math.PI / 2); f2.translate(-w * 0.35, 0, 0); geoms.push(f2);
+    const core = new THREE.CylinderGeometry(R * 0.78, R * 0.78, w * 0.5, 24); core.rotateZ(Math.PI / 2); geoms.push(core);
+    return mergeGeoms(geoms);
+}
+
 // Motor: a static housing with an output shaft along X (drives the axle it mounts on).
 export function motorGeometry(fw, fd, h) {
     const geoms = [];

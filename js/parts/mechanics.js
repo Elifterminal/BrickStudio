@@ -1,7 +1,7 @@
 // Mechanics: gears (mesh to drive other axles) and cranks (drive an axle).
 // Both mount on axles like wheels; `rotates` gives them a rotor the driveline turns.
 import { registerKind } from '../registry.js';
-import { gearGeometry, bevelGeometry, crankGeometry, motorGeometry } from '../geometry.js';
+import { gearGeometry, bevelGeometry, crankGeometry, motorGeometry, pulleyGeometry } from '../geometry.js';
 
 registerKind({ id: 'gear', category: 'Mechanics', label: 'Gears', heightPlates: 4, studs: false, colorable: true,
     mount: 'axle', rotates: true, gear: true, geometry: gearGeometry, sizes: ['1x1','2x2','3x3'] });
@@ -17,3 +17,11 @@ registerKind({ id: 'crank', category: 'Mechanics', label: 'Cranks (driver)', hei
 // Motor: drives its axle at a chosen direction (press F to flip CW/CCW before placing).
 registerKind({ id: 'motor', category: 'Mechanics', label: 'Motors (F=dir)', heightPlates: 4, studs: false, colorable: true,
     mount: 'axle', driver: 3.0, geometry: motorGeometry, sizes: ['2x2'] });
+
+// Pulleys carry belts. Belt/Chain are drag tools: drag from a pulley's top/bottom handle to
+// another's — same-side = same direction, crossed = reversed. Speed couples by radius.
+registerKind({ id: 'pulley', category: 'Mechanics', label: 'Pulleys', heightPlates: 4, studs: false, colorable: true,
+    mount: 'axle', rotates: true, pulley: true, geometry: pulleyGeometry, sizes: ['1x1','2x2','3x3'] });
+
+registerKind({ id: 'belt',  category: 'Mechanics', label: 'Belt (drag)',  tool: 'belt',  sizes: ['drag'] });
+registerKind({ id: 'chain', category: 'Mechanics', label: 'Chain (drag)', tool: 'chain', sizes: ['drag'] });
