@@ -280,6 +280,15 @@ export function crankGeometry(fw, fd, h) {
     return mergeGeoms(geoms);
 }
 
+// Motor: a static housing with an output shaft along X (drives the axle it mounts on).
+export function motorGeometry(fw, fd, h) {
+    const geoms = [];
+    const body = new THREE.BoxGeometry(STUD * 1.3, STUD * 1.0, STUD * 1.0); geoms.push(body);
+    const shaft = new THREE.CylinderGeometry(STUD * 0.18, STUD * 0.18, STUD * 0.6, 10);
+    shaft.rotateZ(Math.PI / 2); shaft.translate(STUD * 0.75, 0, 0); geoms.push(shaft);
+    return mergeGeoms(geoms);
+}
+
 function rectPath(x0, y0, x1, y1) {                   // clockwise (hole winding)
     const p = new THREE.Path();
     p.moveTo(x0, y0); p.lineTo(x0, y1); p.lineTo(x1, y1); p.lineTo(x1, y0); p.closePath();

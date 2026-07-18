@@ -4,7 +4,7 @@ import { PLATE } from './constants.js';
 import { scene, camera, raycaster, pointer } from './scene.js';
 import { makeGroup, disposeGroup, bodyColor } from './factory.js';
 import { getKind, heightPlatesOf, footprint } from './registry.js';
-import { selType, selSize, selColor, rot } from './selection.js';
+import { selType, selSize, selColor, rot, motorDir } from './selection.js';
 import { STUD } from './constants.js';
 import { addVoxels, removeVoxels, isValid, footCells } from './occupancy.js';
 
@@ -88,7 +88,7 @@ function addMounted(spec) {
     rec.role = isGear ? 'gear' : (k.driver ? 'crank' : (k.spin ? 'movable' : null));
     rec.radius = isGear ? Math.max(fw, fd) * STUD * 0.5 : 0;   // pitch radius = half size in studs (teeth = size*8)
     rec.bevel = !!k.bevel;
-    rec.speed = k.driver || 0;
+    rec.speed = (k.driver || 0) * (spec.dir || 1);
     return true;
 }
 
@@ -96,7 +96,11 @@ function addMounted(spec) {
 export function placeAt(st) {
     if (!st) return false;
     const color = bodyColor(selType, selColor);
-    if (st.mount) return addBlock({ type: selType, size: selSize, color, mount: st.mount });
+    if (st.mount) {
+        const spec = { type: selType, size: selSize, color, mount: st.mount };
+        if (getKind(selType).driver) spec.dir = motorDir;   // bake chosen direction into the driver
+        return addBlock(spec);
+    }
     return addBlock({ type: selType, size: selSize, color, rot, minGX: st.minGX, minGZ: st.minGZ, level: st.level });
 }
 
