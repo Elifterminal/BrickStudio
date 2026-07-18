@@ -8,7 +8,7 @@ import { placedBlocks } from './blocks.js';
 import { loadBuild } from './persistence.js';
 import { driveStep } from './mechanics.js';
 
-const canvas = document.getElementById('lego-canvas');
+const canvas = document.getElementById('brick-canvas');
 const container = document.getElementById('canvas-container');
 
 initScene(canvas, container);

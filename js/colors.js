@@ -1,4 +1,4 @@
-// Classic LEGO-ish brick colors. Applied to colorable kinds (bricks/plates/slopes).
+// Classic brick colors. Applied to colorable kinds (bricks/plates/slopes).
 export const COLORS = [
     { name: 'Red',    hex: 0xC4281B },
     { name: 'Orange', hex: 0xF57D20 },

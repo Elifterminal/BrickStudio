@@ -2,8 +2,18 @@
 // plus Export/Import of a JSON file for backup and sharing.
 import { placedBlocks, addBlock, clearAll } from './blocks.js';
 
-const KEY = 'eliflego.build.v1';        // the auto-saved current build
-const SLOTS_KEY = 'eliflego.slots.v1';  // named saves { name: {v, blocks} }
+const KEY = 'brickstudio.build.v1';        // the auto-saved current build
+const SLOTS_KEY = 'brickstudio.slots.v1';  // named saves { name: {v, blocks} }
+
+// One-time migration from the pre-rename keys (safe to remove after a while).
+(function migrateLegacyKeys() {
+    try {
+        for (const [oldK, newK] of [['eliflego.build.v1', KEY], ['eliflego.slots.v1', SLOTS_KEY]]) {
+            const v = localStorage.getItem(oldK);
+            if (v && !localStorage.getItem(newK)) { localStorage.setItem(newK, v); localStorage.removeItem(oldK); }
+        }
+    } catch (e) { /* localStorage unavailable */ }
+})();
 
 export function serialize() {
     return { v: 1, blocks: placedBlocks.map(b => b.spec) };
@@ -11,7 +21,7 @@ export function serialize() {
 
 // ---- Named build slots ----
 function readSlots() { try { return JSON.parse(localStorage.getItem(SLOTS_KEY) || '{}'); } catch { return {}; } }
-function writeSlots(o) { try { localStorage.setItem(SLOTS_KEY, JSON.stringify(o)); } catch (e) { console.warn('ElifLego: slots write failed', e); } }
+function writeSlots(o) { try { localStorage.setItem(SLOTS_KEY, JSON.stringify(o)); } catch (e) { console.warn('Brick Studio: slots write failed', e); } }
 
 export function listSlots() { return Object.keys(readSlots()).sort(); }
 
@@ -37,7 +47,7 @@ export function deleteSlot(name) {
 
 export function saveBuild() {
     try { localStorage.setItem(KEY, JSON.stringify(serialize())); }
-    catch (e) { console.warn('ElifLego: save failed', e); }
+    catch (e) { console.warn('Brick Studio: save failed', e); }
 }
 
 export function loadBuild() {
@@ -45,7 +55,7 @@ export function loadBuild() {
         const raw = localStorage.getItem(KEY);
         if (!raw) return 0;
         return restore(JSON.parse(raw).blocks || []);
-    } catch (e) { console.warn('ElifLego: load failed', e); return 0; }
+    } catch (e) { console.warn('Brick Studio: load failed', e); return 0; }
 }
 
 // Rebuild from an array of specs. Bottom-up so supports exist first; trusts the data.
@@ -61,7 +71,7 @@ export function exportBuild() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'eliflego-build.json';
+    a.download = 'brick-studio-build.json';
     a.click();
     URL.revokeObjectURL(url);
 }
@@ -74,7 +84,7 @@ export function importBuild(file, done) {
             const n = restore(data.blocks || []);
             saveBuild();
             done && done(n);
-        } catch (e) { console.warn('ElifLego: import failed', e); done && done(-1); }
+        } catch (e) { console.warn('Brick Studio: import failed', e); done && done(-1); }
     };
     reader.readAsText(file);
 }

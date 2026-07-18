@@ -1,6 +1,6 @@
-# ElifLego — Brick Studio
+# Brick Studio
 
-A browser-based 3D LEGO builder. Snap real bricks onto a studded baseplate, stack them in
+A browser-based 3D brick builder. Snap bricks onto a studded baseplate, stack them in
 every valid configuration (staggered, overhanging, mixed brick/plate heights), and switch
 between visual themes.
 
@@ -12,7 +12,7 @@ import map. Open it on any static host (GitHub Pages) or a local server.
 ES modules need HTTP (not `file://`):
 
 ```bash
-cd ElifLego
+cd BrickStudio
 python3 -m http.server 8000
 # open http://localhost:8000
 ```
@@ -77,7 +77,7 @@ It shows up in the palette automatically. For a custom shape, pass your own
 Wheels, propellers, and fans **spin** on their own (a real animation). The **Animation**
 toggle in the sidebar pauses them so you can build precisely.
 
-**Mounting on axles:** place an axle (Technic tab), then select a wheel/propeller/fan and move
+**Mounting on axles:** place an axle (Axles tab), then select a wheel/propeller/fan and move
 the cursor near the axle — it snaps onto the nearest **mid or end** point and aligns its spin
 axis to the axle. Away from an axle they place freely on the grid.
 
@@ -117,5 +117,12 @@ This is kinematics (speed + direction), not dynamics — no torque/load yet, whi
 - Particle water (tiny mass-bearing droplets) for the Water piece
 - Multi-size / multi-brightness light bricks
 - Axle-driven mechanics (gears/constraints) so wheels are actually powered
-- More parts (doors, curved slopes, wedge plates) as real LEGO elements
+- More parts (doors, curved slopes, wedge plates) as classic building-brick elements
 - Shareable build links
+
+## Disclaimer
+
+Brick Studio is an independent project. It is **not affiliated with, endorsed by, sponsored by,
+or connected to the LEGO Group** in any way. LEGO® is a trademark of the LEGO Group, which does
+not own, produce, endorse, or support this software. Any references to interlocking building
+bricks are descriptive of a general product category, not any particular brand.

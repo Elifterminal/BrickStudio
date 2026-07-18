@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ElifLego — Brick Studio</title>
+    <title>Brick Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
@@ -19,7 +19,7 @@
 <body class="flex h-screen">
 
     <aside id="sidebar" class="w-64 h-full p-3 overflow-y-auto">
-        <h1 class="text-xl font-bold text-center mb-2" style="text-shadow:0 0 10px currentColor;">ELIFLEGO</h1>
+        <h1 class="text-xl font-bold text-center mb-2" style="text-shadow:0 0 10px currentColor;">BRICK STUDIO</h1>
 
         <label class="block text-[11px] tracking-widest opacity-80">AESTHETIC</label>
         <select id="theme-select" class="mb-2"></select>
@@ -48,10 +48,13 @@
         </div>
         <button id="clear-all" class="block-button w-full mt-1" style="padding:8px;">Clear All</button>
         <input id="import-file" type="file" accept="application/json" class="hidden">
+
+        <p class="disclaimer">Not affiliated with, endorsed by, or connected to the LEGO Group.
+        LEGO&reg; is a trademark of the LEGO Group, which does not sponsor or endorse this product.</p>
     </aside>
 
     <main id="canvas-container" class="flex-1 h-full relative">
-        <canvas id="lego-canvas"></canvas>
+        <canvas id="brick-canvas"></canvas>
         <div class="zoom-controls">
             <button id="zoom-in" class="zoom-button">+</button>
             <button id="zoom-out" class="zoom-button">-</button>

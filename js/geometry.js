@@ -224,7 +224,7 @@ export function doorLeafGeometry(fw, fd, h) {
     return g;
 }
 
-// ---- Technic connectors ----
+// ---- Axle connectors ----
 export function axleGeometry(fw, fd, h) {             // + cross-section rod along X
     const L = Math.max(fw, fd) * STUD, t = STUD * 0.16;
     return mergeGeoms([
