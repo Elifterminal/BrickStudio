@@ -244,14 +244,16 @@ export function pinGeometry(fw, fd, h) {              // short connector pin alo
 // Pitch radius = half the size in studs, teeth = size*8. Same-size gears mesh at an
 // integer stud spacing (1x1@1, 2x2@2, 3x3@3), and the tooth ratio equals the size ratio.
 export function gearGeometry(fw, fd, h) {
+    // R is the PITCH radius (== rec.radius used by the solver). Tooth tips reach R, so two
+    // meshing gears (centres R1+R2 apart) have their tips just touching — reads as meshed.
     const size = Math.max(fw, fd), R = size * STUD * 0.5, teeth = size * 8, thick = STUD * 0.45;
     const geoms = [];
-    const disc = new THREE.CylinderGeometry(R * 0.82, R * 0.82, thick, 24);
+    const disc = new THREE.CylinderGeometry(R * 0.72, R * 0.72, thick, 24);
     disc.rotateZ(Math.PI / 2); geoms.push(disc);
-    const toothW = (2 * Math.PI * R / teeth) * 0.55;
+    const toothLen = R * 0.3, toothW = (2 * Math.PI * R / teeth) * 0.5;
     for (let i = 0; i < teeth; i++) {
-        const t = new THREE.BoxGeometry(thick * 0.85, STUD * 0.22, toothW);
-        t.translate(0, R, 0); t.rotateX(i * 2 * Math.PI / teeth); geoms.push(t);
+        const t = new THREE.BoxGeometry(thick * 0.9, toothLen, toothW);
+        t.translate(0, R - toothLen / 2, 0); t.rotateX(i * 2 * Math.PI / teeth); geoms.push(t);
     }
     return mergeGeoms(geoms);
 }
