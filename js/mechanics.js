@@ -5,7 +5,7 @@ import { STUD } from './constants.js';
 import { axles, placedBlocks } from './blocks.js';
 import { animating } from './motion.js';
 
-const MESH_TOL = 0.35 * STUD;    // gear spacing must be ~(r1+r2); exact on the grid, small slack
+const MESH_TOL = 0.55 * STUD;    // gear spacing must be ~(r1+r2); forgiving for grid + mixed sizes
 const ON_AXLE = 0.3 * STUD;      // how close a part must be to an axle line to count as "on" it
 
 // Which axle a mounted part sits on (nearest axle line it lies along), or null.

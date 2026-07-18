@@ -83,7 +83,7 @@ function addMounted(spec) {
     const rec = registerBlock(g, [], { type, size, color, mount, level: 0 });
     const [fw, fd] = footprint(size);
     rec.role = k.gear ? 'gear' : (k.driver ? 'crank' : (k.spin ? 'movable' : null));
-    rec.radius = k.gear ? Math.max(fw, fd) * STUD : 0;   // pitch radius = size in studs (teeth = size*8)
+    rec.radius = k.gear ? Math.max(fw, fd) * STUD * 0.5 : 0;   // pitch radius = half size in studs (teeth = size*8)
     rec.speed = k.driver || 0;
     return true;
 }

@@ -58,7 +58,7 @@ function sideMountForAxle() {
     return { x: Math.round(hit.point.x / STUD) * STUD, y, z: hit.point.z + dir * off, axleChar };
 }
 
-const gearRadius = size => Math.max(...footprint(size)) * STUD;   // pitch radius = size in studs
+const gearRadius = size => Math.max(...footprint(size)) * STUD * 0.5;   // pitch radius = half size in studs
 
 // Place a gear on the axle under the cursor, snapping ALONG the axle so it lines up
 // (coplanar) with a nearby gear on a parallel axle — so they mesh.
